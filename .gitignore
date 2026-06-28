@@ -1,0 +1,23 @@
+# R
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+.Renviron
+
+# Package artifacts
+src/*.o
+src/*.so
+src/*.dll
+src/*.dylib
+src/symbols.rds
+
+# Docs
+inst/doc
+
+# Misc
+.DS_Store
+Thumbs.db
+*.swp
+*~

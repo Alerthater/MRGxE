@@ -1,0 +1,166 @@
+---
+title: "MRGxE: TMRGxE Gene-Environment Interaction Screening"
+author: "MRGxE Authors"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{MRGxE: TMRGxE GxE Screening}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5
+)
+```
+
+## Introduction
+
+The MRGxE package implements the TMRGxE approach for detecting gene-environment
+interactions (G×E) using GWAS and GWIS summary statistics, based on the
+Mendelian randomization framework described in Zhu et al. (2024) *Nature
+Communications*.
+
+The core insight is that **GWAS marginal effects** (\(\hat{\alpha}\)) and **GWIS
+main effects** (\(\hat{\beta}_1\)) have a linear relationship:
+
+\[
+\hat{\alpha} = \theta \hat{\beta}_1 + \text{deviation}
+\]
+
+Variants with G×E or mediation effects show a systematic deviation from this
+regression line, analogous to horizontal pleiotropic variants in MR analysis.
+
+## Installation
+
+```{r installation, eval = FALSE}
+# Install IMRP (required dependency)
+remotes::install_github("XiaofengZhuCase/IMRP")
+
+# Install MRGxE
+install.packages("MRGxE", repos = NULL, type = "source")
+```
+
+## Quick Start with Simulated Data
+
+```{r quickstart, results = 'hide'}
+library(MRGxE)
+
+# Step 0: Create simulated example data
+sim <- create_example_data(seed = 42)
+
+# Step 1: Harmonize and QC
+harm <- harmonize_gwas_gwis(sim$gwis, sim$gwas)
+```
+
+```{r qc-summary}
+# Check QC counts
+harm$qc_counts
+```
+
+```{r iv-selection}
+# Step 2: Select instrumental variables
+iv <- select_instruments(harm$cleaned, p_col = "P")
+```
+
+```{r rho}
+# Step 3: Estimate rho
+rho <- estimate_rho(harm$cleaned)
+```
+
+```{r tmrgxe}
+# Step 4 & 5: Run TMRGxE genome-wide screen
+screen <- run_tmrgxe(harm$cleaned, iv$instruments, rho$rho)
+```
+
+## Using the Pipeline Wrapper
+
+For a complete end-to-end analysis, use `run_pipeline()`:
+
+```{r pipeline, eval = FALSE}
+result <- run_pipeline(
+  gwas_path = "my_gwas.txt",
+  gwis_path = "my_gwis.txt",
+  col_map = list(
+    snp = "RSID", chr = "CHR", bp = "BP",
+    a1 = "A1", a2 = "A2",
+    gwas_beta = "BETA", gwas_se = "SE", gwas_n = "N",
+    gwis_beta = "BETA_MAIN", gwis_se = "SE_MAIN", gwis_n = "N_GWIS"
+  ),
+  env_variable = "BMI",
+  output_dir = "./GxE_results"
+)
+```
+
+Or with a configuration file:
+
+```{r pipeline-config, eval = FALSE}
+result <- run_pipeline(config = "config.txt")
+```
+
+## Visualizing Results
+
+```{r plots, warning = FALSE}
+# Manhattan plot
+plot_tmrgxe_manhattan(screen$results)
+
+# QQ plot
+plot_tmrgxe_qq(screen$results)
+
+# Scatter plot
+plot_tmrgxe_scatter(screen$results, imrp_result = screen$imrp)
+```
+
+## Generating Reports
+
+```{r report, eval = FALSE}
+# Generate markdown report
+report <- generate_report(
+  tmrgxe_result = screen,
+  harmonize_result = harm,
+  iv_result = iv,
+  rho_result = rho
+)
+cat(report, sep = "\n")
+```
+
+## Module Reference
+
+| Module | Function | Description |
+|--------|----------|-------------|
+| Data I/O | `import_summary_stats()` | Read and standardize GWAS/GWIS files |
+| QC | `harmonize_gwas_gwis()` | Merge, align alleles, filter variants |
+| IV Selection | `select_instruments()` | Select independent instruments |
+| Rho | `estimate_rho()` | Estimate GWAS-GWIS correlation |
+| MR | `run_imrp()` | Run IMRP estimation |
+| Screen | `run_tmrgxe()` | Genome-wide TMRGxE test |
+| Validation | `two_step_validation()` | Two-step G×E validation |
+| Visualization | `plot_tmrgxe_*()` | Manhattan, QQ, scatter plots |
+| Reporting | `generate_report()` | Markdown results report |
+| Pipeline | `run_pipeline()` | Complete end-to-end pipeline |
+
+## Migration Guide
+
+To apply this method to a **new trait × environment combination**, you need:
+
+1. **GWAS marginal effects** for the trait (large sample preferred)
+2. **GWIS main effects** from a model that includes the environment E as a
+   covariate (\(Y = \beta_0 + \beta_1 G + \beta_2 E + \epsilon\))
+
+The environment E can be:
+- **Binary**: smoking status, alcohol consumption
+- **Multi-category**: education level (≥3 categories), encoded as multiple
+  dummy variables
+- **Continuous**: BMI, blood pressure, age
+
+### Adjustable Parameters
+
+- `iv_p_threshold`: Relax if GWAS is underpowered (e.g., 1e-6)
+- `tmrgxe_threshold`: Genome-wide significance (typically 5e-8)
+- `qc_max_eaf_diff`: Stricter (0.1) or looser (0.2) EAF concordance
+- `ld_method`: Use "plink" for real data with LD reference, "distance" as proxy
+- `min_instruments`: Relax if few genome-wide significant loci exist
