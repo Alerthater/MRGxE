@@ -1,0 +1,47 @@
+Package: MRGxE
+Title: Genome-to-Genome Interaction Screening via Mendelian Randomization
+Version: 0.2.0
+Authors@R: c(
+    person("Xiaofeng", "Zhu", role = c("aut"),
+           comment = c(ORCID = "0000-0000-0000-0000")),
+    person("Yihe", "Yang", role = c("aut")),
+    person("Chen", "et al.", role = c("ctb")),
+    person(given = "Maintainer", role = "cre",
+           email = "maintainer@example.com")
+  )
+Description: Implements a generalized MR-based interaction screening framework
+    for detecting pairwise interactions between two genomic entities (e.g.,
+    gene-environment, host-pathogen, gene-gene). Based on the observation that
+    the relationship between two related sets of genetic effect estimates (e.g.,
+    GWAS marginal effect vs GWIS main effect) follows a linear regression, and
+    variants with interaction or mediation effects systematically deviate from
+    this line. The framework encompasses:
+    (1) GxE screening as in Zhu et al. (2024) Nature Communications
+        <doi:10.1038/s41467-024-47806-3>;
+    (2) Host-pathogen genome-to-genome interaction screening as in Chen et al.
+        (2026) Nature, "EBV strain interacts with host HLA to drive
+        nasopharyngeal carcinoma risk".
+    Supports summary-statistics and individual-level data inputs, multiple
+    study designs, permutation-based significance testing, conditional analysis,
+    and flexible modular pipelines.
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.0
+Depends:
+    R (>= 4.0.0)
+Imports:
+    IMRP,
+    stats,
+    graphics,
+    grDevices,
+    utils
+Suggests:
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown,
+    ggplot2,
+    bigsnpr,
+    data.table
+VignetteBuilder: knitr

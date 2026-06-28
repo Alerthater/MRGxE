@@ -1,0 +1,71 @@
+# MRGxE configuration file
+# This is a simple key-value format. Sections are optional.
+
+[data]
+# Paths to GWAS and GWIS summary statistics
+gwas_path = ./data/gwas_summary.txt
+gwis_path = ./data/gwis_summary.txt
+
+# Format: "custom", "GLGC", "UKBB", "CHARGE"
+gwas_format = custom
+gwis_format = custom
+
+# Name of the environmental variable (for record-keeping)
+env_variable = smoking
+
+# ---------------------------------------------------------------------------
+# Column mapping (required when gwas_format = custom)
+# Use dot-notation section if we had hierarchical config
+# For simple config, use key:value pairs per column
+# ---------------------------------------------------------------------------
+# For GWAS:
+gwas_snp = rsID
+gwas_chr = CHR
+gwas_bp = POS
+gwas_a1 = Effect_allele
+gwas_a2 = Other_allele
+gwas_beta = Beta
+gwas_se = SE
+gwas_n = N
+gwas_eaf = EAF
+gwas_p = Pvalue
+
+# For GWIS:
+gwis_snp = MarkerName
+gwis_chr = CHROM
+gwis_bp = POS
+gwis_a1 = Allele1
+gwis_a2 = Allele2
+gwis_beta = Effect
+gwis_se = StdErr
+gwis_n = TotalSampleSize
+gwis_eaf = Freq1
+gwis_p = Pvalue
+
+[params]
+# Quality control
+qc_max_eaf_diff = 0.15
+qc_remove_palindromic = TRUE
+min_n_gwis = 50000
+min_n_gwas = 100000
+
+# Instrumental variable selection
+iv_p_threshold = 5e-8
+ld_method = distance       # "distance", "plink", or "none"
+ld_window_kb = 500
+min_instruments = 10
+relax_threshold = 5e-6
+
+# MR and TMRGxE parameters
+mr_method = IVW
+standardize = TRUE
+tmrgxe_threshold = 5e-8
+
+# Rho estimation
+null_p_threshold = 0.05
+
+[output]
+output_dir = ./results
+run_plots = TRUE
+run_report = TRUE
+run_heritability = FALSE
