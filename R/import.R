@@ -55,6 +55,8 @@ import_effects <- function(
   n_b_col = NULL,
   p_a_col = NULL,
   p_b_col = NULL,
+  chr_col = NULL,
+  bp_col = NULL,
   sep = "\t",
   header = TRUE
 ) {
@@ -86,18 +88,22 @@ import_effects <- function(
   beta_b_col <- beta_b_col %||% .detect_beta_col(data_b, "b")
   se_a_col <- se_a_col %||% .detect_se_col(data_a, "a")
   se_b_col <- se_b_col %||% .detect_se_col(data_b, "b")
+  chr_col <- chr_col %||% .detect_chr_col(data_a)
+  bp_col <- bp_col %||% .detect_bp_col(data_a)
 
   if (is.null(beta_a_col)) stop("Could not auto-detect beta_a column; provide beta_a_col")
   if (is.null(beta_b_col)) stop("Could not auto-detect beta_b column; provide beta_b_col")
   if (is.null(se_a_col)) stop("Could not auto-detect se_a column; provide se_a_col")
   if (is.null(se_b_col)) stop("Could not auto-detect se_b column; provide se_b_col")
 
+  # Build columns to select from each dataset
+  cols_a <- unique(c(id_col, beta_a_col, se_a_col, n_a_col, p_a_col, chr_col, bp_col))
+  cols_b <- unique(c(id_col, beta_b_col, se_b_col, n_b_col, p_b_col))
+
   # Merge by ID
   merged <- merge(
-    data_a[, c(id_col, beta_a_col, se_a_col, n_a_col, p_a_col) %||% id_col,
-           drop = FALSE],
-    data_b[, c(id_col, beta_b_col, se_b_col, n_b_col, p_b_col) %||% id_col,
-           drop = FALSE],
+    data_a[, intersect(cols_a, names(data_a)), drop = FALSE],
+    data_b[, intersect(cols_b, names(data_b)), drop = FALSE],
     by = id_col, suffixes = c("_A", "_B"), all = FALSE
   )
 
@@ -121,8 +127,15 @@ import_effects <- function(
     stringsAsFactors = FALSE
   )
 
-  # Fix column names after merge suffixes
-  names(out) <- c("id", "beta_a", "beta_b", "se_a", "se_b")
+  # Add genomic coordinates from data_a side
+  if (!is.null(chr_col)) {
+    chr_merged <- .col_after_merge(chr_col, "_A")
+    out$CHR <- as.numeric(merged[[chr_merged]])
+  }
+  if (!is.null(bp_col)) {
+    bp_merged <- .col_after_merge(bp_col, "_A")
+    out$BP <- as.numeric(merged[[bp_merged]])
+  }
 
   # Add optional columns
   if (!is.null(n_a_col) && n_a_col %in% names(data_a)) {
@@ -240,6 +253,22 @@ import_summary_stats <- function(
   candidates <- c("SE", "StdErr", "se", "std_err",
                   "SE_GWAS", "SE_GWIS", "METAL_StdErr",
                   if (label == "a") c("SE_A", "se_a") else c("SE_B", "se_b"))
+  for (c in candidates) {
+    if (c %in% names(df)) return(c)
+  }
+  NULL
+}
+
+.detect_chr_col <- function(df) {
+  candidates <- c("CHR", "Chr", "chr", "CHROM", "Chromosome")
+  for (c in candidates) {
+    if (c %in% names(df)) return(c)
+  }
+  NULL
+}
+
+.detect_bp_col <- function(df) {
+  candidates <- c("BP", "Bp", "bp", "POS", "Pos", "position")
   for (c in candidates) {
     if (c %in% names(df)) return(c)
   }
