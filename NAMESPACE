@@ -2,6 +2,7 @@
 
 # === Core framework ===
 export(import_summary_stats)
+export(import_effects)
 export(harmonize_effects)
 export(harmonize_gwas_gwis)
 export(run_imrp)
