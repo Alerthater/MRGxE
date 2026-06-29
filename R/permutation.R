@@ -34,28 +34,64 @@
 permutation_threshold <- function(
   data,
   n_perm = 1000,
-  effect_b_col = "x1",
+  effect_b_col = NULL,
   keep_top_n = 10,
   seed = NULL,
   trace = TRUE
 ) {
   if (!is.null(seed)) set.seed(seed)
 
-  # Validate
-  if (!effect_b_col %in% names(data)) {
-    stop(sprintf("Column '%s' not found in data", effect_b_col))
+  # ---- Auto-detect column format ----
+  # Format A: standardized (x1/x2 from harmonize_effects)
+  if (all(c("x1", "x2", "x1_se", "x2_se") %in% names(data))) {
+    effect_b_col <- effect_b_col %||% "x1"
+    x1_vals <- data[["x1"]]
+    x2_vals <- data[["x2"]]
+    se1_vals <- data[["x1_se"]]
+    se2_vals <- data[["x2_se"]]
+  # Format B: harmoize_effects raw output (beta_b/beta_a)
+  } else if (all(c("beta_b", "beta_a", "se_b", "se_a") %in% names(data))) {
+    effect_b_col <- effect_b_col %||% "beta_b"
+    nb <- data$n_b %||% rep(5000, nrow(data))
+    na <- data$n_a %||% rep(5000, nrow(data))
+    x1_vals <- data$beta_b / data$se_b / sqrt(nb)
+    x2_vals <- data$beta_a / data$se_a / sqrt(na)
+    se1_vals <- 1 / sqrt(nb)
+    se2_vals <- 1 / sqrt(na)
+  # Format C: legacy harmonize_gwas_gwis output
+  } else if (all(c("BETA_GWIS", "BETA_GWAS_ALIGNED", "SE_GWIS", "SE_GWAS") %in% names(data))) {
+    effect_b_col <- effect_b_col %||% "BETA_GWIS"
+    nb <- data$N_GWIS %||% rep(5000, nrow(data))
+    na <- data$N_GWAS %||% rep(5000, nrow(data))
+    x1_vals <- data$BETA_GWIS / data$SE_GWIS / sqrt(nb)
+    x2_vals <- data$BETA_GWAS_ALIGNED / data$SE_GWAS / sqrt(na)
+    se1_vals <- 1 / sqrt(nb)
+    se2_vals <- 1 / sqrt(na)
+  # Format D: screen_interaction results (has InteractionP + still has raw cols)
+  } else if ("InteractionP" %in% names(data)) {
+    if ("beta_b" %in% names(data) && "beta_a" %in% names(data)) {
+      nb <- data$n_b %||% rep(5000, nrow(data))
+      na <- data$n_a %||% rep(5000, nrow(data))
+      x1_vals <- data$beta_b / data$se_b / sqrt(nb)
+      x2_vals <- data$beta_a / data$se_a / sqrt(na)
+      se1_vals <- 1 / sqrt(nb)
+      se2_vals <- 1 / sqrt(na)
+    } else if (all(c("BETA_GWIS", "BETA_GWAS_ALIGNED") %in% names(data))) {
+      nb <- data$N_GWIS %||% rep(5000, nrow(data))
+      na <- data$N_GWAS %||% rep(5000, nrow(data))
+      x1_vals <- data$BETA_GWIS / data$SE_GWIS / sqrt(nb)
+      x2_vals <- data$BETA_GWAS_ALIGNED / data$SE_GWAS / sqrt(na)
+      se1_vals <- 1 / sqrt(nb)
+      se2_vals <- 1 / sqrt(na)
+    } else {
+      stop("screen_interaction results detected but cannot find raw effect columns")
+    }
+  } else {
+    stop("Cannot auto-detect data format. ",
+         "Available columns: ", paste(names(data), collapse = ", "))
   }
 
-  n <- nrow(data)
-  effect_b <- data[[effect_b_col]]
-  x2 <- data$x2 %||% data$beta_a
-  se1 <- data$x1_se %||% data$se_b
-  se2 <- data$x2_se %||% data$se_a
-
-  if (is.null(x2) || is.null(se1) || is.null(se2)) {
-    stop("Need x2, x1_se, x2_se columns (from harmonize_effects)")
-  }
-
+  n <- length(x1_vals)
   min_pvals <- numeric(n_perm)
 
   for (i in seq_len(n_perm)) {
@@ -65,14 +101,14 @@ permutation_threshold <- function(
 
     # Permute effect B
     perm_idx <- sample(n)
-    x1_perm <- effect_b[perm_idx]
+    x1_perm <- x1_vals[perm_idx]
 
     # Quick theta estimate (OLS on all variants)
-    theta_perm <- stats::coef(stats::lm(x2 ~ x1_perm, weights = 1/se2^2))[2]
+    theta_perm <- stats::coef(stats::lm(x2_vals ~ x1_perm, weights = 1/se2_vals^2))[2]
 
     # Compute deviation P-values
-    dev <- x2 - theta_perm * x1_perm
-    dev_se <- sqrt(se2^2 + theta_perm^2 * se1^2)
+    dev <- x2_vals - theta_perm * x1_perm
+    dev_se <- sqrt(se2_vals^2 + theta_perm^2 * se1_vals^2)
     dev_se <- pmax(dev_se, .Machine$double.eps)
     p_vals <- 2 * stats::pnorm(-abs(dev / dev_se))
     p_vals <- pmin(p_vals, 1)
