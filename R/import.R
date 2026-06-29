@@ -101,13 +101,23 @@ import_effects <- function(
     by = id_col, suffixes = c("_A", "_B"), all = FALSE
   )
 
+  # Helper: get merged column name after merge suffix mangling
+  .col_after_merge <- function(base_col, suffix) {
+    if (base_col == id_col) return(id_col)
+    c1 <- paste0(base_col, suffix)   # e.g. "beta_a_A"
+    c2 <- base_col                   # e.g. "beta_a" (when no name collision)
+    if (c1 %in% names(merged)) return(c1)
+    if (c2 %in% names(merged)) return(c2)
+    stop(sprintf("Column '%s' (or '%s') not found after merge", c1, c2))
+  }
+
   # Standardize output
   out <- data.frame(
     id = merged[[id_col]],
-    beta_a = as.numeric(merged[[paste0(beta_a_col, if (id_col == beta_a_col) "" else "_A") %||% beta_a_col %||% beta_a_col]]),
-    beta_b = as.numeric(merged[[beta_b_col %||% paste0(beta_b_col, "_B")]]),
-    se_a = as.numeric(merged[[se_a_col %||% paste0(se_a_col, "_A")]]),
-    se_b = as.numeric(merged[[se_b_col %||% paste0(se_b_col, "_B")]]),
+    beta_a = as.numeric(merged[[.col_after_merge(beta_a_col, "_A")]]),
+    beta_b = as.numeric(merged[[.col_after_merge(beta_b_col, "_B")]]),
+    se_a = as.numeric(merged[[.col_after_merge(se_a_col, "_A")]]),
+    se_b = as.numeric(merged[[.col_after_merge(se_b_col, "_B")]]),
     stringsAsFactors = FALSE
   )
 
