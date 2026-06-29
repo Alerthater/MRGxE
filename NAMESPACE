@@ -3,9 +3,11 @@
 # === Core framework ===
 export(import_summary_stats)
 export(harmonize_effects)
+export(harmonize_gwas_gwis)
 export(run_imrp)
 export(search_pleio_with_effect)
 export(screen_interaction)
+export(run_tmrgxe)
 
 # === Instruments ===
 export(select_instruments)
@@ -25,8 +27,11 @@ export(individual_gxe_scan)
 
 # === Visualization ===
 export(plot_manhattan)
+export(plot_tmrgxe_manhattan)
 export(plot_qq)
+export(plot_tmrgxe_qq)
 export(plot_scatter)
+export(plot_tmrgxe_scatter)
 export(plot_conditional)
 
 # === Reporting & Pipeline ===
