@@ -55,13 +55,10 @@ two_step_validation <- function(
 
   results <- tmrgxe_result$results
 
-  # Determine which P column to use
-  # screen_interaction() uses "InteractionP"; legacy used "PleioP_MR"
   p_col <- if ("InteractionP" %in% names(results)) "InteractionP" else
            if ("PleioP_MR" %in% names(results)) "PleioP_MR" else
            stop("Cannot find interaction P-value column in results")
 
-  # Step 1: Identify significant variants
   step1_sig <- results[results[[p_col]] < step1_threshold &
                          !is.na(results[[p_col]]), ]
 
@@ -79,8 +76,6 @@ two_step_validation <- function(
   message(sprintf("Step 1: %d significant variants (P < %.0e)",
                   nrow(step1_sig), step1_threshold))
 
-  # Step 2: Direct test
-  # Bonferroni correction for step 1 significant variants
   x <- nrow(step1_sig)
   step2_threshold <- step2_alpha / max(x, 1)
 
@@ -88,7 +83,6 @@ two_step_validation <- function(
   step2_sig <- NULL
 
   if (!is.null(interaction_beta_col) && !is.null(interaction_se_col)) {
-    # TDirect from GWIS interaction terms
     if (interaction_beta_col %in% names(step1_sig) &&
         interaction_se_col %in% names(step1_sig)) {
       tdirect_z <- step1_sig[[interaction_beta_col]] /
@@ -133,4 +127,11 @@ two_step_validation <- function(
 }
 
 #' @export
-pr
+print.mrgxe_twostep <- function(x, ...) {
+  cat("Two-step GxE validation\n")
+  cat(sprintf("  Step 1 significant: %d\n", nrow(x$step1_significant)))
+  if (!is.null(x$step2_results)) {
+    cat(sprintf("  Step 2 threshold:   %.2e\n", x$step2_threshold))
+    cat(sprintf("  Step 2 significant: %d\n", nrow(x$step2_significant %||% data.frame())))
+  }
+}
