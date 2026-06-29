@@ -48,15 +48,22 @@ two_step_validation <- function(
   interaction_beta_col = NULL,
   interaction_se_col = NULL
 ) {
-  if (!inherits(tmrgxe_result, "mrgxe_tmrgxe")) {
-    stop("tmrgxe_result must be an object of class 'mrgxe_tmrgxe'")
+  if (!inherits(tmrgxe_result, "mrgxe_screen") &&
+      !inherits(tmrgxe_result, "mrgxe_tmrgxe")) {
+    stop("tmrgxe_result must be an object of class 'mrgxe_screen' or 'mrgxe_tmrgxe'")
   }
 
   results <- tmrgxe_result$results
 
+  # Determine which P column to use
+  # screen_interaction() uses "InteractionP"; legacy used "PleioP_MR"
+  p_col <- if ("InteractionP" %in% names(results)) "InteractionP" else
+           if ("PleioP_MR" %in% names(results)) "PleioP_MR" else
+           stop("Cannot find interaction P-value column in results")
+
   # Step 1: Identify significant variants
-  step1_sig <- results[results$PleioP_MR < step1_threshold &
-                         !is.na(results$PleioP_MR), ]
+  step1_sig <- results[results[[p_col]] < step1_threshold &
+                         !is.na(results[[p_col]]), ]
 
   if (nrow(step1_sig) == 0) {
     message("No variants passed step 1 (TMRGxE) screening")
@@ -126,13 +133,4 @@ two_step_validation <- function(
 }
 
 #' @export
-print.mrgxe_twostep <- function(x, ...) {
-  cat("Two-step GxE validation\n")
-  cat(sprintf("  Step 1 significant: %d\n", nrow(x$step1_significant)))
-  if (!is.null(x$step2_results)) {
-    cat(sprintf("  Step 2 threshold:   %.2e\n", x$step2_threshold))
-    cat(sprintf("  Step 2 significant: %d\n", nrow(x$step2_significant %||% data.frame())))
-  }
-}
-
-# %||% is defined in utils.R
+pr
