@@ -40,10 +40,11 @@ read_config <- function(file, format = c("auto", "simple")) {
     }
 
     # Parse key=value or key: value
-    kv <- strsplit(line, "[:=]", n = 2)[[1]]
-    if (length(kv) == 2) {
-      key <- trimws(kv[1])
-      value <- trimws(kv[2])
+    parts <- regexec("^([^:=]+)[:=](.+)$", line)
+    m <- regmatches(line, parts)[[1]]
+    if (length(m) == 3) {
+      key <- trimws(m[2])
+      value <- trimws(m[3])
 
       # Try to coerce value types
       value <- .coerce_config_value(value)
