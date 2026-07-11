@@ -78,10 +78,10 @@ test_that("run_tmrgxe returns expected results", {
 
   screen <- run_tmrgxe(harm$cleaned, iv$instruments, rho$rho)
 
-  expect_s3_class(screen, "mrgxe_tmrgxe")
+  expect_s3_class(screen, "mrgxe_screen")
   expect_true("results" %in% names(screen))
-  expect_true("PleioP_MR" %in% names(screen$results))
-  expect_true("is_significant_gxe" %in% names(screen$results))
+  expect_true("InteractionP" %in% names(screen$results))
+  expect_true("is_significant" %in% names(screen$results))
 })
 
 # Test simulation

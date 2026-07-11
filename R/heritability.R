@@ -5,7 +5,8 @@
 #' This provides a lower bound estimate of the interaction and environmentally
 #' mediated heritability, as described in Zhu et al. (2024).
 #'
-#' @param tmrgxe_result \code{mrgxe_tmrgxe} object from \code{\link{run_tmrgxe}}.
+#' @param tmrgxe_result \code{mrgxe_screen} object from \code{\link{screen_interaction}}
+#'   or \code{\link{run_tmrgxe}}.
 #' @param method Character. LD score regression method.
 #'   \code{"bigsnpr"} uses the bigsnpr package; \code{"ldscR"} uses ldscR.
 #'   Default \code{"bigsnpr"}.
@@ -55,7 +56,7 @@ estimate_gxe_heritability <- function(
 
   # Compute GxE residual effect and its SE
   gxe_beta <- beta_gwas - theta * beta_gwis
-  gxe_se <- tmrgxe_result$results$PleioSE
+  gxe_se <- tmrgxe_result$results$InteractionSE
 
   # Remove missing values
   valid <- !is.na(gxe_beta) & !is.na(gxe_se) & gxe_se > 0
@@ -69,6 +70,4 @@ estimate_gxe_heritability <- function(
     method = method,
     note = paste("Heritability estimation requires LD scores. ",
                  "Use bigsnpr::snp_ldsc() or ldscR::snp_ldsc() separately ",
-                 "with the PleioBeta and PleioSE columns.")
-  )
-}
+                 "wit

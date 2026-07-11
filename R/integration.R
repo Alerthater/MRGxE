@@ -39,9 +39,10 @@ run_full_simulation_pipeline <- function(
   # ---- Step 1: Generate individual-level data ----
   message("Step 1: Generating individual-level data...")
   if (design == "fig2ad") {
-    sim <- simulate_gxe_fig2ad_exact(...)
+    sim <- simulate_gxe_fig2ad(compute_effects = TRUE, ...)
   } else {
-    sim <- simulate_gxe_fig2ef_exact(...)
+    # fig2ef: each replicate computes effects inline; summary is aggregated
+    sim <- simulate_gxe_fig2ef(...)
   }
 
   # ---- Step 2: Compute summary statistics ----
@@ -216,8 +217,4 @@ convert_to_mrgxe_format <- function(sim_output, n_chr = 22) {
 
   list(
     gwas = gwas_formatted,
-    gwis = gwis_formatted,
-    rho  = effects$rho,
-    theta_iv = effects$theta_iv
-  )
-}
+ 
