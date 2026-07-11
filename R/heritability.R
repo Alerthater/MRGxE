@@ -43,33 +43,48 @@ estimate_gxe_heritability <- function(
   data <- tmrgxe_result$results
   theta <- tmrgxe_result$imrp$causal_estimate
 
-  # Compute effect sizes for heritability
-  # Marginal effect: beta_gwis
-  # GxE residue: beta_gwis - theta * beta_gwis (using aligned effects)
   beta_gwis <- if ("BETA_GWIS" %in% names(data)) data$BETA_GWIS else data$x1
   beta_gwas <- if ("BETA_GWAS_ALIGNED" %in% names(data)) {
     data$BETA_GWAS_ALIGNED
   } else data$x2
 
-  # Standard errors
-  se_gwis <- if ("SE_GWIS" %in% names(data)) data$SE_GWIS else data$x1_se
-
-  # Compute GxE residual effect and its SE
   gxe_beta <- beta_gwas - theta * beta_gwis
-  gxe_se <- tmrgxe_result$results$InteractionSE
+  gxe_se   <- tmrgxe_result$results$InteractionSE
 
-  # Remove missing values
   valid <- !is.na(gxe_beta) & !is.na(gxe_se) & gxe_se > 0
-  gxe_beta <- gxe_beta[valid]
-  gxe_se <- gxe_se[valid]
+
+  msg <- paste("Heritability estimation requires LD scores.",
+               "Use bigsnpr::snp_ldsc() or ldscR::snp_ldsc() separately",
+               "with the InteractionBeta and InteractionSE columns.")
 
   list(
-    marginal_h2 = NA,
+    marginal_h2    = NA,
     interaction_h2 = NA,
-    n_variants = sum(valid),
-    method = method,
-    note = paste(
-      "Heritability estimation requires LD scores.",
-      "Use bigsnpr::snp_ldsc() or ldscR::snp_ldsc() separately",
-      "with the InteractionBeta and InteractionSE columns."
-    )
+    n_variants     = sum(valid),
+    method         = method,
+    note           = msg
+  )
+}
+
+#' Estimate Interaction Heritability (Alias)
+#'
+#' Alias for \code{\link{estimate_gxe_heritability}}.
+#'
+#' @inheritParams estimate_gxe_heritability
+#' @return Same as \code{\link{estimate_gxe_heritability}}.
+#' @export
+estimate_interaction_heritability <- function(
+  tmrgxe_result,
+  method = c("bigsnpr", "ldscR"),
+  ld_ref_path = NULL,
+  population = "EUR",
+  output_dir = NULL
+) {
+  estimate_gxe_heritability(
+    tmrgxe_result = tmrgxe_result,
+    method        = method,
+    ld_ref_path   = ld_ref_path,
+    population    = population,
+    output_dir    = output_dir
+  )
+}
