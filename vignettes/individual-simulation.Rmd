@@ -1,0 +1,206 @@
+---
+title: "Individual-Level GxE Simulation — Reproducing Zhu et al. (2024)"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Individual-Level GxE Simulation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE  # vignette requires MRGxE installation
+)
+```
+
+## Overview
+
+This vignette documents the new individual-level simulation functions in MRGxE (v0.3.0+). These functions reproduce the exact simulation methodology from:
+
+> Zhu, X., Yang, Y., Lorincz-Comi, N. et al. *An approach to identify gene-environment interactions and reveal new biological insight in complex traits.* **Nature Communications** 15, 3385 (2024). doi:10.1038/s41467-024-47806-3
+
+based on the original simulation code at [https://github.com/harryyiheyang/MR.GxE.Code](https://github.com/harryyiheyang/MR.GxE.Code) (Zenodo: 10.5281/zenodo.10815731).
+
+## New Functions
+
+| Function | Purpose | Paper Figure |
+|----------|---------|-------------|
+| `simulate_gxe_fig2ad_exact()` | 200-variant, no mediation, binary environment | Fig 2A-D |
+| `simulate_gxe_fig2ef_exact()` | 20-variant, with/without mediation | Fig 2E-F, Supp. Fig 10 |
+| `compute_gxe_effects_individual()` | Compute GWAS+GWIS effects from ind.-level data | Building block |
+| `generate_gxe_phenotype()` | Generate phenotypes under 3 GxE models | Building block |
+| `convert_to_mrgxe_format()` | Convert simulation output to pipeline input | Utility |
+| `run_full_simulation_pipeline()` | End-to-end simulation + screening | Integration |
+| `validate_simulation()` | Quick validation against paper expectations | Testing |
+| `plot_fig2ad()` | Plot theta, beta3, type I error, power | Visualization |
+| `plot_fig2ef_power()` | Plot power/type I error curves | Visualization |
+
+## Design 1: Fig 2A-D (Many Variants, No Mediation)
+
+This design generates M=200 independent variants with a binary environment variable. It tests T_MRGxE against T_Direct under varying environment distributions between the GWAS and GWIS cohorts.
+
+### Core assumptions
+
+- **No mediation**: E does not depend on G
+- **Binary environment**: E ~ Binom(1, p_E), standardised to unit variance
+- **Interaction only on variant 1**: beta_3 = 0.005
+- **theta estimated from variants 3..M**: avoids correlation with the interaction variant
+- **Three sign scenarios**: same direction (s=+1), opposite (s=-1), no main effect (s=0)
+
+### Quick example
+
+```{r}
+library(MRGxE)
+
+# Small-scale run for demonstration
+set.seed(42)
+sim_ad <- simulate_gxe_fig2ad_exact(
+  n_variants = 200,
+  n_gwas     = 160000,
+  n_gwis     = 80000,
+  mu_e       = c(0.1, 0.3, 0.5),
+  ssign      = c(1, -1, 0),
+  n_sim      = 50,           # use 100+ for publication
+  verbose    = TRUE
+)
+
+# Check results
+# Mean theta should be ~1
+mean(sim_ad$theta, na.rm = TRUE)
+
+# Plot theta estimates
+plot_fig2ad(sim_ad, "theta")
+
+# Plot power curves
+plot_fig2ad(sim_ad, "power")
+```
+
+### Full-scale replication
+
+To reproduce the paper's Fig 2A-D exactly:
+
+```{r}
+# WARNING: This takes several hours even with parallelisation
+sim_ad_full <- simulate_gxe_fig2ad_exact(
+  n_variants = 200,
+  n_gwas     = 160000,
+  n_gwis     = 80000,
+  mu_e       = seq(0.05, 0.5, by = 0.05),  # 10 values
+  ssign      = c(1, -1, 0),
+  n_sim      = 300,         # paper used ~3000
+  n_cores    = parallel::detectCores() / 2
+)
+```
+
+## Design 2: Fig 2E-F (20 Variants, Mediation Scenarios)
+
+This design tests 20 independent variants under six scenarios combining type I error estimation and power analysis, with and without mediation through the environment factor. Environment distribution differs between GWAS and GWIS cohorts (mean μ_E for GWIS, 2×μ_E for GWAS-only).
+
+### Six scenarios
+
+| # | Type | Mediation | E contrib. | γ (env scale) |
+|---|------|-----------|-----------|---------------|
+| 1 | Type I | None | 1% | 1 |
+| 2 | Type I | 1% | 1% | 1 |
+| 3 | Type I | 5% | 5% | √5 |
+| 4 | Power | None | 1% | 1 |
+| 5 | Power | 1% | 1% | 1 |
+| 6 | Power | 5% | 5% | √5 |
+
+### Quick example
+
+```{r}
+set.seed(123)
+sim_ef <- simulate_gxe_fig2ef_exact(
+  n_variants = 20,
+  n_gwas     = c(20000, 100000, 200000, 300000),
+  n_gwis     = 20000,
+  n_sim      = 100,          # use 1000 for publication
+  scenarios  = 1:6,
+  verbose    = TRUE
+)
+
+# View results
+sim_ef$results[, , "T_MRGxE"]
+
+# Plot
+plot_fig2ef_power(sim_ef, "type1")
+plot_fig2ef_power(sim_ef, "power")
+```
+
+## Three Phenotype Models
+
+The `generate_gxe_phenotype()` function implements the three phenotype models from the paper:
+
+```{r}
+n <- 20000
+g <- rbinom(n, 2, 0.3) / sqrt(2 * 0.3 * 0.7)
+e <- rnorm(n, mean = 1, sd = 1)
+
+# Model 1: No mediation, no interaction
+y1 <- generate_gxe_phenotype(cbind(g), e, model = "none")
+
+# Model 2: Mediation only (E depends on G, but no GxE)
+y2 <- generate_gxe_phenotype(cbind(g), e, model = "mediation_only")
+
+# Model 3: Mediation + interaction
+y3 <- generate_gxe_phenotype(cbind(g), e, model = "mediation_interaction")
+```
+
+## Integration with the MRGxE Pipeline
+
+Once you have individual-level simulation results, you can feed them into the MRGxE screening pipeline:
+
+```{r}
+# Generate data
+sim <- simulate_gxe_fig2ad_exact(
+  n_variants = 200, n_sim = 1, verbose = FALSE
+)
+
+# Convert to MRGxE format
+input_data <- convert_to_mrgxe_format(sim)
+
+# Run screening pipeline
+result <- run_pipeline(
+  effect_a_path = NULL,  # use in-memory data
+  effect_b_path = NULL,
+  design_type = "gxe",
+  gwas_data = input_data$gwas,
+  gwis_data = input_data$gwis,
+  rho = input_data$rho,
+  verbose = TRUE
+)
+```
+
+## Validation
+
+Run a quick validation to verify that the simulation produces results consistent with the paper:
+
+```{r}
+validate_simulation(n_sim = 100)
+```
+
+This checks:
+1. Mean theta estimate ≈ 1.0
+2. Type I error ≈ 0.05 under the null
+3. Power follows expected patterns (MRGxE generally outperforms Direct test)
+
+## Key Differences from the Original `simulate_gxe_summary()`
+
+The existing `simulate_gxe_summary()` and `create_example_data()` functions generate **summary statistics directly** — they create BETA, SE, and P values without ever generating individual-level data. These are useful for quick testing of the pipeline but do not reproduce the paper's simulation methodology.
+
+The new functions in this vignette:
+
+- **Generate individual-level data** matching the paper's equations exactly
+- **Compute GWAS/GWIS effects from scratch** using the same method as the paper
+- **Reproduce the paper's simulation parameters** (sample sizes, variant counts, environment distributions)
+- **Include mediation modelling** (Fig 2E-F)
+- **Support missing scenarios** (varied environment distributions between cohorts, sample overlap)
+
+## References
+
+1. Zhu, X. et al. (2024) Nature Communications, 15:3385. [doi:10.1038/s41467-024-47806-3](https://doi.org/10.1038/s41467-024-47806-3)
+2. Original simulation code: [github.com/harryyiheyang/MR.GxE.Code](https://github.com/harryyiheyang/MR.GxE.Code)
+3. MRGxE package: [github.com/Alerthater/-MRGxE](https://github.com/Alerthater/-MRGxE)

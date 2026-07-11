@@ -48,6 +48,30 @@ export(simulate_gxe_summary)
 export(read_config)
 export(validate_config)
 
+# === Individual-level simulation (v0.3.0) — Fig 2A-D ===
+export(simulate_gxe_fig2ad_exact)
+export(plot_fig2ad)
+
+# === Individual-level simulation (v0.3.0) — Fig 2E-F ===
+export(simulate_gxe_fig2ef_exact)
+export(run_single_scenario)
+export(plot_fig2ef_power)
+
+# === Individual-level simulation (v0.3.0) — general ===
+export(simulate_gxe_fig2ad)
+export(simulate_gxe_fig2ef)
+export(compute_gxe_effects_individual)
+export(generate_gxe_phenotype)
+
+# === S3 methods ===
+S3method(summary, gxe_simulation_fig2ad)
+S3method(summary, gxe_simulation_fig2ef)
+
+# === Integration ===
+export(run_full_simulation_pipeline)
+export(validate_simulation)
+export(convert_to_mrgxe_format)
+
 # === Study design presets ===
 export(study_design)
 export(gxe_design)
