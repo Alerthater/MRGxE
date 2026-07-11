@@ -106,4 +106,7 @@ importFrom(graphics, lines)
 importFrom(graphics, plot)
 importFrom(grDevices, dev.off)
 importFrom(grDevices, png)
-importFrom(ut
+importFrom(utils, modifyList)
+importFrom(utils, read.table)
+importFrom(utils, write.csv)
+importFrom(utils, write.table)
