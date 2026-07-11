@@ -68,6 +68,8 @@ estimate_gxe_heritability <- function(
     interaction_h2 = NA,
     n_variants = sum(valid),
     method = method,
-    note = paste("Heritability estimation requires LD scores. ",
-                 "Use bigsnpr::snp_ldsc() or ldscR::snp_ldsc() separately ",
-                 "wit
+    note = paste(
+      "Heritability estimation requires LD scores.",
+      "Use bigsnpr::snp_ldsc() or ldscR::snp_ldsc() separately",
+      "with the InteractionBeta and InteractionSE columns."
+    )
