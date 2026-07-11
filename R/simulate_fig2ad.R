@@ -516,7 +516,7 @@ plot_fig2ad <- function(sim_result,
       ggplot2::geom_hline(yintercept = 0.05 - se_05, linetype = "dashed") +
       ggplot2::ylab("Type I error") +
       ggplot2::xlab(expression("GWAS environmental factor mean" ~ mu[E]^mar)) +
-      ggplot2::ggtit
+      ggplot2::ggtitle("C. Type I error rate")
     return(p)
   }
 

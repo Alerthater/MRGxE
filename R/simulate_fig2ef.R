@@ -371,7 +371,6 @@ plot_fig2ef_power <- function(sim_result, type = c("type1", "power")) {
       legend.position = c(0.02, 0.98),
       legend.justification = c(0.02, 0.98),
       legend.title    = ggplot2::element_blank(),
-      panel.border    = ggplot2::element_rect(siz
       panel.border    = ggplot2::element_rect(size = 1.5),
       legend.text    = ggplot2::element_text(size = 10),
       axis.text      = ggplot2::element_text(size = 10),
