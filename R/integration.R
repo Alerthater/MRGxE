@@ -218,3 +218,6 @@ convert_to_mrgxe_format <- function(sim_output, n_chr = 22) {
   list(
     gwas = gwas_formatted,
  
+    gwis = gwis_formatted
+  )
+}

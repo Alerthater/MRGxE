@@ -517,3 +517,48 @@ plot_fig2ad <- function(sim_result,
       ggplot2::ylab("Type I error") +
       ggplot2::xlab(expression("GWAS environmental factor mean" ~ mu[E]^mar)) +
       ggplot2::ggtit
+    return(p)
+  }
+
+  # === Power plot ===
+  se_05 <- 2 * sqrt(0.05 * 0.95 / params$n_sim)
+
+  df_list <- list()
+  ssign_labels <- c("1" = "s = +1", "-1" = "s = -1", "0" = "s = 0")
+
+  for (ss in seq_along(params$ssign)) {
+    sgn <- params$ssign[ss]
+    for (test in c("T_Direct", "T_MRGxE")) {
+      df_list[[length(df_list) + 1]] <- data.frame(
+        value = sim_result$power[, ss, test],
+        mu_e  = params$mu_e,
+        test  = ifelse(test == "T_Direct", "Direct test", "MR-GxE test"),
+        ssign = ssign_labels[as.character(sgn)],
+        stringsAsFactors = FALSE
+      )
+    }
+  }
+
+  df <- do.call(rbind, df_list)
+
+  p <- ggplot2::ggplot(df, ggplot2::aes(x = mu_e, y = value, color = test)) +
+    ggplot2::geom_line(linewidth = 1.5) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(
+      panel.grid       = ggplot2::element_blank(),
+      legend.position  = c(0.02, 0.98),
+      legend.justification = c(0.02, 0.98),
+      legend.title     = ggplot2::element_blank(),
+      panel.border     = ggplot2::element_rect(size = 1.5),
+      text             = ggplot2::element_text(size = 14)
+    ) +
+    ggplot2::facet_grid(~ ssign) +
+    ggplot2::geom_hline(yintercept = 0.05) +
+    ggplot2::geom_hline(yintercept = 0.05 + se_05, linetype = "dashed") +
+    ggplot2::geom_hline(yintercept = 0.05 - se_05, linetype = "dashed") +
+    ggplot2::ylab("Power") +
+    ggplot2::xlab(expression("GWAS environmental factor mean" ~ mu[E]^mar)) +
+    ggplot2::ggtitle("D. Power")
+
+  p
+}

@@ -372,3 +372,21 @@ plot_fig2ef_power <- function(sim_result, type = c("type1", "power")) {
       legend.justification = c(0.02, 0.98),
       legend.title    = ggplot2::element_blank(),
       panel.border    = ggplot2::element_rect(siz
+      panel.border    = ggplot2::element_rect(size = 1.5),
+      legend.text    = ggplot2::element_text(size = 10),
+      axis.text      = ggplot2::element_text(size = 10),
+      axis.title     = ggplot2::element_text(size = 12),
+      strip.text     = ggplot2::element_text(size = 11)
+    ) +
+    ggplot2::geom_hline(yintercept = 0.05, linetype = "dashed",
+                        color = "red", linewidth = 0.5) +
+    ggplot2::scale_fill_manual(values = c("#45d9fd", "#e74c3c", "#2ecc71")) +
+    ggplot2::labs(
+      x = "GWAS sample size",
+      y = y_label,
+      fill = "Method"
+    ) +
+    ggplot2::ylim(0, max(1, max(df$value, na.rm = TRUE) * 1.1))
+
+  p
+}
