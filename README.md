@@ -1,6 +1,6 @@
 # MRGxE: Genome-to-Genome Interaction Screening via Mendelian Randomization
 
-**Version 0.2.0**
+**Version 0.3.0**
 
 MRGxE implements a generalized MR-based interaction screening framework for detecting pairwise interactions between two genomic entities. The core insight is that the relationship between two related sets of genetic effect estimates follows a linear regression under the null, and variants with interaction or mediation effects systematically deviate from this line — analogous to horizontal pleiotropic variants in MR analysis.
 
