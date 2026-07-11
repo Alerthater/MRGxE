@@ -98,13 +98,15 @@ simulate_gxe_fig2ef_exact <- function(
 
   scenario_defs <- list(
     # Type I error scenarios
-    "1" = list(type = "type1", rho1 = 0,    beta_g = 0.1, env_scale = 1,   beta_gxe = 0,   label = "No mediation, E 1%"),
-    "2" = list(type = "type1", rho1 = 0.01, beta_g = 0.2, env_scale = 1,   beta_gxe = 0,   label = "Mediation 1%, E 1%"),
-    "3" = list(type = "type1", rho1 = 0.05, beta_g = 0.2, env_scale = sqrt(5), beta_gxe = 0, label = "Mediation 5%, E 5%"),
+    # beta_g: variant 1 genotype coefficient
+    # beta_g_null: variants 2-20 genotype coefficient (may differ for scenario 6)
+    "1" = list(type = "type1", rho1 = 0,    beta_g = 0.1, beta_g_null = 0.1, env_scale = 1,   beta_gxe = 0,   label = "No mediation, E 1%"),
+    "2" = list(type = "type1", rho1 = 0.01, beta_g = 0.2, beta_g_null = 0.2, env_scale = 1,   beta_gxe = 0,   label = "Mediation 1%, E 1%"),
+    "3" = list(type = "type1", rho1 = 0.05, beta_g = 0.2, beta_g_null = 0.2, env_scale = sqrt(5), beta_gxe = 0, label = "Mediation 5%, E 5%"),
     # Power scenarios
-    "4" = list(type = "power", rho1 = 0,    beta_g = 0.1, env_scale = 1,   beta_gxe = 0.1, label = "No mediation, E 1%"),
-    "5" = list(type = "power", rho1 = 0.01, beta_g = 0.2, env_scale = 1,   beta_gxe = 0.2, label = "Mediation 1%, E 1%"),
-    "6" = list(type = "power", rho1 = 0.05, beta_g = 0.1, env_scale = sqrt(5), beta_gxe = 0.2, label = "Mediation 5%, E 5%")
+    "4" = list(type = "power", rho1 = 0,    beta_g = 0.1, beta_g_null = 0.1, env_scale = 1,   beta_gxe = 0.1, label = "No mediation, E 1%"),
+    "5" = list(type = "power", rho1 = 0.01, beta_g = 0.2, beta_g_null = 0.2, env_scale = 1,   beta_gxe = 0.2, label = "Mediation 1%, E 1%"),
+    "6" = list(type = "power", rho1 = 0.05, beta_g = 0.1, beta_g_null = 0.2, env_scale = sqrt(5), beta_gxe = 0.2, label = "Mediation 5%, E 5%")
   )
 
   # ---- Storage: n_scenarios x n_sample_sizes x 3 tests ----
@@ -164,8 +166,10 @@ simulate_gxe_fig2ef_exact <- function(
 
           # ---- Generate phenotype ----
           # Y = beta_g * G + gamma_e_unscaled * E + beta_gxe * G * E + N(0, 10)
-          # where gamma_e_unscaled = env_scale (since E already has unit variance)
-          y <- scen$beta_g * g + scen$env_scale * e +
+          # For variant 1: use scen$beta_g; for variants 2-20: use scen$beta_g_null
+          # (Scenario 6 has different beta_g for variant 1 vs null variants, per original code)
+          bg <- if (k == 1) scen$beta_g else scen$beta_g_null
+          y <- bg * g + scen$env_scale * e +
             scen$beta_gxe * g * e + stats::rnorm(n1, mean = 0, sd = sqrt(10))
 
           # ---- GWAS: y ~ g (marginal effect) ----
@@ -367,24 +371,4 @@ plot_fig2ef_power <- function(sim_result, type = c("type1", "power")) {
       legend.position = c(0.02, 0.98),
       legend.justification = c(0.02, 0.98),
       legend.title    = ggplot2::element_blank(),
-      panel.border    = ggplot2::element_rect(size = 1.5),
-      text            = ggplot2::element_text(size = 14)
-    ) +
-    ggplot2::xlab(expression(n[1])) +
-    ggplot2::ylab(y_label) +
-    ggplot2::scale_fill_manual(values = c("#45d9fd", "#fe4365", "#fff1b9"))
-
-  if (type == "type1") {
-    p <- p +
-      ggplot2::geom_hline(yintercept = 0.05, linewidth = 0.5) +
-      ggplot2::geom_hline(yintercept = 0.05 + se_05, linetype = "dashed",
-                          linewidth = 0.3) +
-      ggplot2::geom_hline(yintercept = 0.05 - se_05, linetype = "dashed",
-                          linewidth = 0.3) +
-      ggplot2::scale_y_continuous(limits = c(0, 0.5), breaks = seq(0, 0.5, by = 0.1))
-  } else {
-    p <- p + ggplot2::scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, by = 0.2))
-  }
-
-  return(p)
-}
+      panel.border    = ggplot2::element_rect(siz

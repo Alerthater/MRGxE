@@ -75,6 +75,14 @@ biggwas <- function(y, G) {
 #' @param n_cores     Integer. Number of parallel cores. Default 1.
 #'   Set higher for parallel execution.
 #' @param verbose     Logical. Print progress. Default \code{TRUE}.
+#' @param use_sample_sd Logical. If \code{TRUE}, standardise genotypes using
+#'   \code{g / sd(g)} (sample standard deviation) matching Fig 2C-D in the
+#'   original code. If \code{FALSE} (default), uses \code{g / sqrt(2pq)}
+#'   (theoretical standard deviation) matching Fig 2A-B.
+#' @param use_all_variants_for_sig Logical. If \code{TRUE}, estimate the
+#'   variance of true betas (sig) using all M variants matching the original
+#'   t_pleio call in Fig 2C-D. If \code{FALSE} (default), only use instrument
+#'   variants (indices 3:M) for a more conservative estimate.
 #'
 #' @return A list with components:
 #'   \item{theta}{Matrix (n_mu_e x n_sim) of estimated theta values}
@@ -105,7 +113,9 @@ simulate_gxe_fig2ad_exact <- function(
     n_sim       = 100,
     seed        = NULL,
     n_cores     = 1,
-    verbose     = TRUE) {
+    verbose     = TRUE,
+    use_sample_sd = FALSE,
+    use_all_variants_for_sig = FALSE) {
 
   if (!is.null(seed)) set.seed(seed)
 
@@ -164,7 +174,11 @@ simulate_gxe_fig2ad_exact <- function(
         G <- matrix(NA_real_, nrow = n_total, ncol = M)
         for (j in seq_len(M)) {
           g_raw <- stats::rbinom(n_total, size = 2, prob = maf[j])
-          G[, j] <- g_raw / sqrt(2 * maf[j] * (1 - maf[j]))
+          if (use_sample_sd) {
+            G[, j] <- g_raw / stats::sd(g_raw)
+          } else {
+            G[, j] <- g_raw / sqrt(2 * maf[j] * (1 - maf[j]))
+          }
         }
 
         # ---- Generate main effects ----
@@ -270,8 +284,14 @@ simulate_gxe_fig2ad_exact <- function(
         # rho0 = n_overlap / sqrt(n1) / sqrt(n2) / sqrt(1 + mean(E2)^2)
         rho0 <- n2 / sqrt(n1) / sqrt(n2) / sqrt(1 + mean(E2)^2)
 
-        # Variance of true betas in the instrument set
-        betahat_var <- stats::var(beta_hat[iv_idx]) - mean(beta_se[iv_idx]^2)
+        # Variance of true betas.
+        # Original t_pleio uses var(B[,2])-mean(B[,5]^2) over ALL M variants.
+        # For exact reproduction of Fig 2C-D, set use_all_variants_for_sig=TRUE.
+        if (use_all_variants_for_sig) {
+          betahat_var <- stats::var(beta_hat) - mean(beta_se^2)
+        } else {
+          betahat_var <- stats::var(beta_hat[iv_idx]) - mean(beta_se[iv_idx]^2)
+        }
         betahat_var <- max(betahat_var, 0)
 
         r1 <- alpha_hat[1] - hat_theta * beta_hat[1]
@@ -496,48 +516,4 @@ plot_fig2ad <- function(sim_result,
       ggplot2::geom_hline(yintercept = 0.05 - se_05, linetype = "dashed") +
       ggplot2::ylab("Type I error") +
       ggplot2::xlab(expression("GWAS environmental factor mean" ~ mu[E]^mar)) +
-      ggplot2::ggtitle("C. Type I error of direct and MR-GxE tests") +
-      ggplot2::scale_color_manual(values = c("#45d9fd", "#fe4365"))
-
-    return(p)
-  }
-
-  if (plot_type == "power") {
-    df_list <- list()
-    ssign_labels <- c("1" = "s = +1", "-1" = "s = -1", "0" = "s = 0")
-
-    for (ss in seq_along(params$ssign)) {
-      sgn <- params$ssign[ss]
-      for (test in c("T_Direct", "T_MRGxE")) {
-        df_list[[length(df_list) + 1]] <- data.frame(
-          value = sim_result$power[, ss, test],
-          mu_e  = params$mu_e,
-          test  = ifelse(test == "T_Direct", "Direct test", "MR-GxE test"),
-          ssign = ssign_labels[as.character(sgn)],
-          stringsAsFactors = FALSE
-        )
-      }
-    }
-
-    df <- do.call(rbind, df_list)
-
-    p <- ggplot2::ggplot(df, ggplot2::aes(x = mu_e, y = value, color = test)) +
-      ggplot2::geom_line(linewidth = 1.5) +
-      ggplot2::theme_bw() +
-      ggplot2::theme(
-        panel.grid       = ggplot2::element_blank(),
-        legend.position  = c(0.02, 0.98),
-        legend.justification = c(0.02, 0.98),
-        legend.title     = ggplot2::element_blank(),
-        panel.border     = ggplot2::element_rect(size = 1.5),
-        text             = ggplot2::element_text(size = 14)
-      ) +
-      ggplot2::facet_grid(~ ssign) +
-      ggplot2::ylab("Power") +
-      ggplot2::xlab(expression("GWAS environmental factor mean" ~ mu[E]^mar)) +
-      ggplot2::ggtitle("D. Power of direct and MR-GxE tests") +
-      ggplot2::scale_color_manual(values = c("#45d9fd", "#fe4365"))
-
-    return(p)
-  }
-}
+      ggplot2::ggtit
