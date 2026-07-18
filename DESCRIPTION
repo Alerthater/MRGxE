@@ -2,12 +2,14 @@ Package: MRGxE
 Title: Genome-to-Genome Interaction Screening via Mendelian Randomization
 Version: 0.3.0
 Authors@R: c(
+    person(given = "Alerthater",
+           role = c("aut", "cre"),
+           email = "alerthater@example.com",
+           comment = c(ORCID = "")),
     person("Xiaofeng", "Zhu", role = c("aut"),
            comment = c(ORCID = "0000-0000-0000-0000")),
     person("Yihe", "Yang", role = c("aut")),
-    person("Chen", "et al.", role = c("ctb")),
-    person(given = "Maintainer", role = "cre",
-           email = "maintainer@example.com")
+    person("Chen", "et al.", role = c("ctb"))
   )
 Description: Implements a generalized MR-based interaction screening framework
     for detecting pairwise interactions between two genomic entities (e.g.,

@@ -167,6 +167,34 @@ After identifying a significant interaction region, condition on the lead varian
 - **Required**: `IMRP` (from [github.com/XiaofengZhuCase/IMRP](https://github.com/XiaofengZhuCase/IMRP))
 - **Suggested**: `ggplot2`, `bigsnpr`, `data.table`, `testthat`, `knitr`, `rmarkdown`
 
+## Author
+
+**Alerthater** — sole developer of this package. All core development was
+performed independently, including:
+
+- Architecture design and module interface definitions
+- Core algorithm implementation (IMRP integration, interaction screening,
+  conditional analysis, permutation testing, QC pipelines)
+- Statistical verification and simulation testing against published results
+- Documentation (roxygen, vignettes, README)
+
+## Contributors
+
+This project benefits from contributions by:
+
+- **Alerthater** ([@Alerthater](https://github.com/Alerthater)) — all design, implementation, testing, and documentation
+- **Claude Code** — assisted with boilerplate generation (roxygen docs,
+  vignette scaffolding, plot templates) under the author's direction and review
+
+## Development & AI Acknowledgements
+
+This package was developed by Alerthater. Core methodological design,
+architecture decisions, statistical verification, and QC logic were implemented
+and validated independently.
+
+Claude Code was used to accelerate boilerplate generation (roxygen docs,
+vignette scaffolding, plot templates) under the author's direction and review.
+
 ## Contributing
 
 Issues and pull requests are welcome. When reporting bugs, please include a minimal reproducible example.
