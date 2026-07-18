@@ -83,15 +83,11 @@ For a complete end-to-end analysis, use `run_pipeline()`:
 
 ```{r pipeline, eval = FALSE}
 result <- run_pipeline(
-  gwas_path = "my_gwas.txt",
-  gwis_path = "my_gwis.txt",
-  col_map = list(
-    snp = "RSID", chr = "CHR", bp = "BP",
-    a1 = "A1", a2 = "A2",
-    gwas_beta = "BETA", gwas_se = "SE", gwas_n = "N",
-    gwis_beta = "BETA_MAIN", gwis_se = "SE_MAIN", gwis_n = "N_GWIS"
-  ),
-  env_variable = "BMI",
+  effect_a_path = "my_gwas.txt",
+  effect_b_path = "my_gwis.txt",
+  design_type = "gxe",
+  beta_a_col = "BETA", se_a_col = "SE", n_a_col = "N",
+  beta_b_col = "BETA_MAIN", se_b_col = "SE_MAIN", n_b_col = "N_GWIS",
   output_dir = "./GxE_results"
 )
 ```
@@ -120,8 +116,8 @@ plot_tmrgxe_scatter(screen$results, imrp_result = screen$imrp)
 ```{r report, eval = FALSE}
 # Generate markdown report
 report <- generate_report(
-  tmrgxe_result = screen,
-  harmonize_result = harm,
+  screen_result = screen,
+  harm_result = harm,
   iv_result = iv,
   rho_result = rho
 )

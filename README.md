@@ -22,15 +22,15 @@ If you use MRGxE, please cite:
 
 ## Features
 
-- **Study design abstraction**: Unified interface for GxE, genome-to-genome, and custom designs
-- **IMRP-based screening**: Iterative MR and pleiotropy testing using the TMRGxE/T-interaction statistic
+- **IMRP-based screening**: Interaction deviation testing using the IMRP framework
 - **Multiple data modes**: Summary statistics or individual-level data
+- **Study design abstraction**: Unified interface for GxE, genome-to-genome, and custom designs
 - **QC by design**: Automatic QC defaults tailored to each design type (standardization, palindromic removal, EAF checks, etc.)
-- **Conditional analysis**: Test whether a lead variant explains a regional signal (e.g., HLA-A\*11:01 conditioning)
-- **Permutation testing**: Empirical significance thresholds, including BRASS-style clustered permutation for structured samples
-- **Visualization**: Manhattan, QQ, scatter, and conditional forest plots
+- **Conditional analysis**: Test whether a lead variant explains a regional signal (e.g., HLA-A*11:01 conditioning)
+- **Permutation testing**: Empirical significance thresholds, including BRASS-style clustered permutation
+- **Individual-level simulation**: Reproduce Zhu et al. (2024) simulation methodology (Fig 2A–F)
+- **Visualization**: Manhattan, QQ, scatter, and conditional plots
 - **Pipeline wrapper**: One-call end-to-end analysis with automated reporting
-- **Backward compatible**: All v0.1.0 functions (`import_summary_stats`, `harmonize_gwas_gwis`, `run_tmrgxe`, etc.) continue to work
 
 ## Installation
 
@@ -150,17 +150,14 @@ After identifying a significant interaction region, condition on the lead varian
 
 ## Changelog
 
-### v0.2.0 (2026-06)
-- Added `study_design()` abstraction with `gxe`, `genome_to_genome`, `custom` presets
-- Added `screen_interaction()` — generalized screening for any design
-- Added `conditional_analysis()` — summary-statistics and individual-level modes
-- Added `permutation_threshold()` and `brass_permutation()`
-- Added `compute_effects_from_individual()` and `individual_gxe_scan()`
-- All v0.1 functions maintained with backward compatibility
-
-### v0.1.0 (2026-06)
-- Initial release: GxE screening with IMRP
-- Core functions: `import_summary_stats()`, `harmonize_gwas_gwis()`, `run_tmrgxe()`
+### v0.3.0 (2026-07)
+- Added individual-level GxE simulation functions reproducing Zhu et al. (2024):
+  `simulate_gxe_fig2ad_exact()`, `simulate_gxe_fig2ef_exact()`, `simulate_gxe_fig2ad()`,
+  `simulate_gxe_fig2ef()`, `compute_gxe_effects_individual()`, `generate_gxe_phenotype()`
+- Added integration bridge: `run_full_simulation_pipeline()`, `validate_simulation()`,
+  `convert_to_mrgxe_format()`
+- Added simulation visualization: `plot_fig2ad()`, `plot_fig2ef_power()`
+- Added `run_single_scenario()` for individual Fig 2E-F scenario runs
 
 ## Dependencies
 
