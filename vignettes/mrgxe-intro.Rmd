@@ -1,6 +1,6 @@
 ---
 title: "MRGxE: TMRGxE Gene-Environment Interaction Screening"
-author: "MRGxE Authors"
+author: "Alerthater"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >

@@ -10,7 +10,7 @@ If you use MRGxE, please cite:
 
 - **GxE framework**: Zhu et al. (2024) *Nature Communications*. "A MR-based approach for gene-environment interaction screening." [doi:10.1038/s41467-024-47806-3](https://doi.org/10.1038/s41467-024-47806-3)
 - **Genome-to-genome design**: Chen et al. (2026) *Nature*. "EBV strain interacts with host HLA to drive nasopharyngeal carcinoma risk."
-- **MRGxE package**: Yang et al. (2026). "MRGxE: An R package for genome-to-genome interaction screening."
+- **MRGxE package**: Alerthater (2026). "MRGxE: An R package for genome-to-genome interaction screening."
 
 ## Supported Study Designs
 
@@ -201,4 +201,4 @@ Issues and pull requests are welcome. When reporting bugs, please include a mini
 
 ## License
 
-GPL-3 © Yang et al.
+GPL-3 © Alerthater
